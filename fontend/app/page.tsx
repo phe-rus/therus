@@ -65,6 +65,7 @@ export default function Home() {
   const loggedin = {
     loggedIn: true,
   }
+  
   return (
     <section className="flex flex-col items-center justify-center h-full w-screen">
       {loggedin.loggedIn ? (
