@@ -6,6 +6,7 @@ import { Provider } from "@/components/theme/provider";
 import { cn } from "@/lib/utils";
 import { fontSans } from "@/lib/fonts";
 import { Indicator } from "@/components/theme/Indicator";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -49,6 +50,7 @@ export default function RootLayout({
           <div className="relative flex min-h-screen h-screen w-screen flex-col">
             <div className="flex-1">{children}</div>
           </div>
+          <Toaster />
           <Indicator />
         </Provider>
       </body>

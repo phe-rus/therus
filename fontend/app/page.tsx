@@ -1,14 +1,23 @@
+"use client";
+
+import { therus } from "@/components/database/therus";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { toast } from "sonner";
 import { AppleIcon, InfoIcon, MenuSquare, MoreHorizontal, PlusIcon, Webhook, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [createAccount, setCreateAccount] = useState(false)
+  const [loggedin, setLoggedin] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+
   const listProjects = [
     {
       title: "Paperless Office",
@@ -62,13 +71,59 @@ export default function Home() {
     }
   ]
 
-  const loggedin = {
-    loggedIn: true,
+  const handleCreateUser = async () => {
+    const { success, error } = await therus.createUser(name, email, password);
+    if (success) {
+      toast("User created successfully");
+      setCreateAccount(false)
+    } else {
+      toast(error);
+    }
+  };
+
+  async function handleLogin() {
+    const { success, token, error } = await therus.loginUser(email, password);
+    if (success) {
+      toast("User logged in successfully");
+
+      setLoggedin(true);
+      window.localStorage.setItem("session", token);
+    } else {
+      toast(`Error logging in: ${error}`);
+      console.error('Error logging in:', error);
+    }
   }
-  
+
+  async function fetchCurrentUser(token: string) {
+    const { success, currentUser, error } = await therus.getCurrentUser(token);
+    if (success) {
+      setLoggedin(true);
+      console.log('Current user details:', currentUser);
+    } else {
+      console.error('Error fetching current user:', error);
+    }
+  }
+
+  async function handleLogout() {
+    const { success, error } = await therus.logoutUser();
+    if (success) {
+      toast('User logged out successfully');
+    } else {
+      toast(`Error logging out: ${error}`);
+    }
+  }
+
+  useEffect(() => {
+    if (window.localStorage.getItem("session")) {
+      fetchCurrentUser(window.localStorage.getItem("session")!);
+    } else {
+      setLoggedin(false)
+    }
+  }, []);
+
   return (
     <section className="flex flex-col items-center justify-center h-full w-screen">
-      {loggedin.loggedIn ? (
+      {loggedin ? (
         <div className="flex flex-col gap-5 w-full  px-5 md:px-72">
           <Label className="text-2xl font-black">Your Therus Projects</Label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -136,25 +191,56 @@ export default function Home() {
               </Avatar>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
+              {createAccount ? (<Input
+                type="username"
+                placeholder="User name"
+                className="rounded-full"
+                value={name}
+                required
+                onChange={(e) => setName(e.target.value)} />) : (<></>)}
+
               <Input
                 type="email"
                 placeholder="Email Address"
-                className="rounded-full" />
+                className="rounded-full"
+                value={email}
+                required
+                onChange={(e) => setEmail(e.target.value)} />
+
               <Input
                 type="password"
                 placeholder="Password"
-                className="rounded-full" />
+                className="rounded-full"
+                value={password}
+                required
+                onChange={(e) => setPassword(e.target.value)} />
 
               <div className="flex flex-row justify-between">
-                <Button size="sm" variant="ghost" className="rounded-full">
+                <Button size="sm" variant="ghost" className="rounded-full"
+                  onClick={() => setCreateAccount(createAccount ? (false) : (true))}>
                   <Label>Create Account</Label>
                 </Button>
 
-                <Button size="sm" variant="ghost" className="rounded-full">
-                  <Label className="text-sm font-bold">Forgort Password ?</Label>
-                </Button>
+                {createAccount ? (<></>) : (
+                  <Button size="sm" variant="ghost" className="rounded-full">
+                    <Label className="text-sm font-bold">Forgort Password ?</Label>
+                  </Button>
+                )
+                }
               </div>
-              <Button variant="outline" className="rounded-full">Login</Button>
+              {createAccount ?
+                (
+                  <Button variant="outline" className="rounded-full"
+                    onClick={handleCreateUser}>
+                    Create Account
+                  </Button>
+                ) : (
+                  <Button variant="outline" className="rounded-full"
+                    onClick={handleLogin}>
+                    Login
+                  </Button>
+                )
+              }
             </CardContent>
           </Card>
         </div>
