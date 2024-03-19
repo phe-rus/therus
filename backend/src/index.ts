@@ -38,8 +38,7 @@ app.use((req, res, next) => {
 const databaseDirectory = "./database";
 const databasePath = path.join(databaseDirectory, "user-database.json");
 const secretKey =
-  process.env.JWT_SECRET ||
-  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+  process.env.JWT_SECRET ||"missing_error";
 
 try {
   // Check if the directory exists, if not, create it

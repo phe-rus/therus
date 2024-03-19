@@ -48,3 +48,7 @@ yarn-error.log*
 
 /backend/next-env.d.ts
 /fontend/next-env.d.ts
+
+/backend/database
+/backend/.env
+/fontend/.env
