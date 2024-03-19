@@ -37,7 +37,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
+/backend/.env*.local
+/fontend/.env*.local
 
 # vercel
 /fontend/.vercel
@@ -49,6 +50,6 @@ yarn-error.log*
 /backend/next-env.d.ts
 /fontend/next-env.d.ts
 
-/backend/database
+/backend/database/user-database.jsons
 /backend/.env
 /fontend/.env
