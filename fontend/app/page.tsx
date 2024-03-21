@@ -218,7 +218,7 @@ export default function Home() {
               <div className="flex flex-row justify-between">
                 <Button size="sm" variant="ghost" className="rounded-full"
                   onClick={() => setCreateAccount(createAccount ? (false) : (true))}>
-                  <Label>Create Account</Label>
+                  <Label>{createAccount ? ("login") : ("create account ?")}</Label>
                 </Button>
 
                 {createAccount ? (<></>) : (

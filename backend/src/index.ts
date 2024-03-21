@@ -12,15 +12,15 @@ dotenv.config();
 const app: Express = express();
 const port = process.env.PORT || 8010;
 
-const allowedOrigins = [
-  'http://localhost:3000',
-];
+const allowedOrigins = ["http://localhost:3000"];
 
 app.use(express.json());
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
 
 // CORS middleware
 app.use((req, res, next) => {
@@ -37,8 +37,7 @@ app.use((req, res, next) => {
 // Sample database initialization
 const databaseDirectory = "./database";
 const databasePath = path.join(databaseDirectory, "user-database.json");
-const secretKey =
-  process.env.JWT_SECRET ||"missing_error";
+const secretKey = process.env.JWT_SECRET || "missing_error";
 
 try {
   // Check if the directory exists, if not, create it
@@ -104,6 +103,9 @@ app.post("/create", (req: Request, res: Response) => {
   // Generate UID for the user
   const uid = generateUID();
 
+  var d = new Date();
+  var createdAt = d.toLocaleString();
+
   // Hash password
   bcrypt.hash(password, 10, (err, hash) => {
     if (err) {
@@ -111,7 +113,7 @@ app.post("/create", (req: Request, res: Response) => {
     }
 
     // Save user to database
-    users[email] = { name, email, password: hash, uid };
+    users[email] = { name, email, password: hash, uid, createdAt };
     writeUsers(users);
     res.status(201).json({ message: "User created successfully" });
   });
