@@ -6,6 +6,7 @@ import fs from "fs";
 import cors from "cors";
 import { generateUID } from "./utils/generate_uid";
 import path from "path";
+import { execSync } from "child_process"; // Import execSync for running shell commands
 
 dotenv.config();
 
@@ -99,6 +100,9 @@ app.post("/create", (req: Request, res: Response) => {
   if (users[email]) {
     return res.status(400).json({ message: "Email already exists" });
   }
+  if (users[name]) {
+    return res.status(400).json({ message: "Name already exists" });
+  }
 
   // Generate UID for the user
   const uid = generateUID();
@@ -156,6 +160,83 @@ app.post("/login", (req: Request, res: Response) => {
 app.get("/current_user", verifyToken, (req: Request, res: Response) => {
   const currentUser = req.body.currentUser;
   res.status(200).json(currentUser);
+});
+
+app.post("/create_project", (req: Request, res: Response) => {
+  const { projectName, projectId, currentUserUid } = req.body;
+
+  // Validate request body
+  if (!projectName || !projectId || !currentUserUid) {
+    return res.status(400).json({
+      message: "Project name, project ID, and current user UID are required",
+    });
+  }
+
+  const projectDirectory = `./database/${currentUserUid}/${projectId}`;
+  // Check if project directory already exists
+  if (!fs.existsSync(projectDirectory)) {
+    try {
+      // Create parent directories if they don't exist
+      execSync(`mkdir -p ${projectDirectory}`);
+
+      // Create subdirectories for database, storage, config
+      fs.mkdirSync(`${projectDirectory}/database`);
+      fs.mkdirSync(`${projectDirectory}/storage`);
+      fs.mkdirSync(`${projectDirectory}/config`);
+
+      // Write project data to project.json
+      fs.writeFileSync(
+        `${projectDirectory}/project.json`,
+        JSON.stringify({ projectName, projectId })
+      );
+
+      return res
+        .status(200)
+        .json({ message: `${projectName} created successfully` });
+    } catch (error) {
+      console.error("Error creating project:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  } else {
+    return res.status(400).json({ message: "Project already exists" });
+  }
+});
+
+app.get("/projects", (req: Request, res: Response) => {
+  const currentUserUid = req.query.currentUserUid as string;
+
+  // Validate currentUserUid
+  if (!currentUserUid) {
+    return res.status(400).json({ message: "Current user UID is required" });
+  }
+
+  const projectsDirectory = `./database/${currentUserUid}`;
+  // Check if user's projects directory exists
+  if (fs.existsSync(projectsDirectory)) {
+    try {
+      // Read the user's projects from the projects directory
+      const projects = fs.readdirSync(projectsDirectory);
+      const projectList = projects.map((projectId) => {
+        // Read project data from project.json
+        const projectData = JSON.parse(
+          fs.readFileSync(
+            `${projectsDirectory}/${projectId}/project.json`,
+            "utf-8"
+          )
+        );
+        return { projectId, projectName: projectData.projectName };
+      });
+
+      return res.status(200).json(projectList);
+    } catch (error) {
+      console.error("Error reading projects:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  } else {
+    return res
+      .status(404)
+      .json({ message: "No projects found for the current user" });
+  }
 });
 
 // Start server

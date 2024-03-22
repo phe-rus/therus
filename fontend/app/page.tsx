@@ -17,59 +17,47 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [listProject, setProjects] = useState<any[]>([])
 
-  const listProjects = [
-    {
-      title: "Paperless Office",
-      publicName: "paperless-office",
-      platforms: {
-        android: true,
-        web: true,
-        ios: true,
-        mutliplaform: true
+  const [projectName, setProjectName] = useState("")
+  const [projectId, setProjectId] = useState("my-awesome-project-id")
+
+  async function getProjects(token: string) {
+    try {
+      const { success, currentUser, error } = await therus.getCurrentUser(token);
+      if (success) {
+        const currentUserUid = currentUser.uid;
+        console.log(`uids ${currentUserUid}`)
+        const project = await therus.fetchProjects(currentUserUid);
+        console.log(`project information ${project}`)
+        setProjects(project)
+      } else {
+        console.error('Error fetching projects:', error);
       }
-    },
-    {
-      title: "Paperless Office",
-      publicName: "paperless-office",
-      platforms: {
-        android: true,
-        web: true,
-        ios: true,
-        mutliplaform: true
-      }
-    },
-    {
-      title: "Paperless Office",
-      publicName: "paperless-office",
-      platforms: {
-        android: false,
-        web: false,
-        ios: false,
-        mutliplaform: true
-      }
-    },
-    {
-      title: "Paperless Office",
-      publicName: "paperless-office",
-      platforms: {
-        android: false,
-        web: true,
-        ios: true,
-        mutliplaform: false
-      }
-    },
-    {
-      title: "Paperless Office",
-      publicName: "paperless-office",
-      platforms: {
-        android: false,
-        web: true,
-        ios: false,
-        mutliplaform: false
-      }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
     }
-  ]
+  }
+
+  const create_project = async (projectName: any, projectId: any) => {
+    try {
+      const { success, currentUser, error } = await therus.getCurrentUser(window.localStorage.getItem("session")!);
+      if (success) {
+        const currentUserUid = currentUser.uid;
+        const { suc, er, mes  } = await therus.createProject(projectName, projectId, currentUserUid)
+        if (suc) {
+          toast(mes);
+          window.location.reload();
+        } else {
+          toast(`Fialed to create Project ${er}`)
+        }
+      } else {
+        console.error('Error fetching projects:', error);
+      }
+    } catch (error) {
+
+    }
+  }
 
   const handleCreateUser = async () => {
     const { success, error } = await therus.createUser(name, email, password);
@@ -104,22 +92,16 @@ export default function Home() {
     }
   }
 
-  async function handleLogout() {
-    const { success, error } = await therus.logoutUser();
-    if (success) {
-      toast('User logged out successfully');
-    } else {
-      toast(`Error logging out: ${error}`);
-    }
-  }
 
   useEffect(() => {
+    setProjectId(`${projectName}-dev`)
     if (window.localStorage.getItem("session")) {
       fetchCurrentUser(window.localStorage.getItem("session")!);
+      getProjects(window.localStorage.getItem("session")!)
     } else {
       setLoggedin(false)
     }
-  }, []);
+  }, [projectName]);
 
   return (
     <section className="flex flex-col items-center justify-center h-full w-screen">
@@ -153,16 +135,26 @@ export default function Home() {
 
                   <Input
                     placeholder="Enter your project name"
-                    className="rounded-[10px] md:w-[450px]" />
+                    className="rounded-[10px] md:w-[450px]"
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)} />
 
-                  <Button size="sm" variant="outline" className="rounded-full w-fit">my-awesome-project-id</Button>
+                  <Button size="sm" variant="outline" className="rounded-full w-fit">{projectId}</Button>
 
-                  <Button size="lg" variant="secondary" className="rounded-full w-fit">Continue</Button>
+                  <DrawerClose>
+                    <Button size="lg" variant="secondary" className="rounded-full w-fit"
+                      onClick={() => {
+                        create_project(
+                          projectName,
+                          projectId
+                        )
+                      }}>Continue</Button>
+                  </DrawerClose>
                 </div>
               </DrawerContent>
             </Drawer>
 
-            {listProjects.map((item, index) => (
+            {listProject.map((item, index) => (
               <Card key={index} className="flex flex-col col-span-1 h-[180px] hover:bg-accent">
                 <CardContent className="flex flex-col h-full justify-between p-5">
                   <div className="flex flex-col">
@@ -190,6 +182,7 @@ export default function Home() {
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
             </CardHeader>
+
             <CardContent className="flex flex-col gap-2">
               {createAccount ? (<Input
                 type="username"

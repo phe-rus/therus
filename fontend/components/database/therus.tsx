@@ -1,3 +1,5 @@
+import { error } from "console";
+
 const BASE_URL = "http://localhost:8010";
 
 export const therus = {
@@ -64,11 +66,70 @@ export const therus = {
     },
     async logoutUser() {
         try {
-          localStorage.removeItem('session');
-          return { success: true };
+            localStorage.removeItem('session');
+            return { success: true };
         } catch (error) {
-          console.error("Error logging out:", error);
-          return { success: false, error: "An error occurred while logging out" };
+            console.error("Error logging out:", error);
+            return { success: false, error: "An error occurred while logging out" };
         }
-      },
+    },
+    async createProject(projectName: string, projectId: string, currentUserUid: string) {
+        try {
+            const response = await fetch('http://localhost:8010/create_project', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ projectName, projectId, currentUserUid }),
+            });
+            const data = await response.json();
+            if (response.ok) {
+                console.log('Project created successfully:', data.message);
+                return { suc: true, mes: data.message }
+            } else {
+                console.error('Failed to create project:', data.message);
+                return { suc: false, er: data.message }
+            }
+        } catch (error) {
+            console.error('Error creating project:', error);
+            return { suc: false, er: error }
+        }
+    },
+    async fetchProjects(currentUserUid: any): Promise<any[]> {
+        try {
+            if (!currentUserUid) {
+                console.error('Current user UID is required');
+                return [];
+            }
+
+            const response = await fetch(`http://localhost:8010/projects?currentUserUid=${currentUserUid}`);
+            const data = await response.json();
+
+            if (response.ok) {
+                console.log('Projects:', data);
+
+                // Construct the desired object structure
+                const projects: any[] = data.map((project: any) => ({
+                    title: project.projectName,
+                    publicName: project.projectId,
+                    platforms: {
+                        android: false,
+                        web: false,
+                        ios: false,
+                        multiplatform: false
+                    }
+                }));
+
+                console.log(`projects ${projects}`)
+                return projects;
+            } else {
+                console.error('Failed to fetch projects:', data.message);
+                return [];
+            }
+        } catch (error) {
+            console.error('Error fetching projects:', error);
+            return [];
+        }
+    }
+
 }
